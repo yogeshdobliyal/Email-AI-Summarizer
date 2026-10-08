@@ -1,0 +1,435 @@
+{
+  "name": "Email AI summarizer",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -256,
+        -16
+      ],
+      "id": "84c9a3e9-b61e-4730-b2a1-a80c84a37419",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "wS9CLvLJxU2VJebP",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "llama3:latest",
+          "mode": "list",
+          "cachedResultName": "llama3:latest"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "={\n    \"model\": \"claude-opus-4-6\",\n    \"max_tokens\": 1024,\n    \"messages\": [\n      {\n       \"role\": \"user\",\n\"content\": \"Return ONLY valid JSON.\\n\\nOutput format:\\n\\n{\\n\\\"important\\\": true or false,\\n\\\"priority\\\": \\\"high\\\", \\\"medium\\\", or \\\"low\\\",\\n\\\"category\\\": \\\"meeting\\\", \\\"support\\\", \\\"invoice\\\", or \\\"other\\\",\\n\\\"summary\\\": \\\"short summary\\\",\\n\\\"action_items\\\": [\\\"tasks\\\"],\\n\\\"meeting_date\\\": \\\"YYYY-MM-DD or null\\\"\\n}\\n\\nRules:\\n\\n- Important = requires action or response\\n- Keep summary short\\n- Return empty array if no action items\\n- Return null if no meeting date\\n\\nEmail:\\n{{ $json.snippet }}\"\n    }\nRules:\n\nImportant = requires action or response \n\nkeep summary short \n\nReturn empty array if no action items\n\nReturn null if no meeting date\n\nEmail:\n{{ $json.snippet }}\"\n      }\n    ]\n  }\n      "
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.ollama",
+      "typeVersion": 1,
+      "position": [
+        768,
+        80
+      ],
+      "id": "25c590d9-8b12-4b7e-be01-567bfc846524",
+      "name": "Message a model1",
+      "credentials": {
+        "ollamaApi": {
+          "id": "1iJW9oV6tfjvHucQ",
+          "name": "Ollama account 2"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "models/gemini-3-flash-preview"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Return ONLY valid JSON.\n\nOutput format:\n\n{\n\"important\": true or false,\n\"priority\": \"high\", \"medium\", or \"low\",\n\"category\": \"meeting\", \"support\", \"invoice\", or \"other\",\n\"summary\": \"short summary\",\n\"action_items\": [\"tasks\"],\n\"meeting_date\": \"YYYY-MM-DD or null\"\n}\nRules:\n\nImportant = requires action or response\n\nkeep summary short\n\nReturn empty array if no action item\n\nReturn null if no meeting date\n\nEmail:\n{{ $json.snippet }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "maxOutputTokens": 1500,
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        -32,
+        -16
+      ],
+      "id": "3bb619b2-7e62-42ef-b960-fe979fd8361e",
+      "name": "Ai summarizer",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "93k17xZexxH9am8I",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "56838af9-7a4c-4c56-b7e7-c1cfe8e37f81",
+              "leftValue": "={{ $json.parsed.summary }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "1e5651f0-b2b7-4d4c-ac73-a4f619b61f67",
+              "leftValue": "={{ $json.parsed.priority }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "95b34570-f73e-466c-a913-a954988f93ba",
+              "leftValue": "={{ $json.parsed.category }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        544,
+        -32
+      ],
+      "id": "c200c2bb-552f-4560-b65e-7284f2dd13da",
+      "name": "gemini validation check??"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "56838af9-7a4c-4c56-b7e7-c1cfe8e37f81",
+              "leftValue": "={{ $json.summary }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "1e5651f0-b2b7-4d4c-ac73-a4f619b61f67",
+              "leftValue": "={{ $json.priority }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "95b34570-f73e-466c-a913-a954988f93ba",
+              "leftValue": "={{ $json.category }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1120,
+        80
+      ],
+      "id": "ace930cc-9824-4e9f-b791-7d38724482a0",
+      "name": "ollama validation check??1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "28698ff8-11c2-481c-b586-b1f6809a9f90",
+              "name": "parsed",
+              "value": "={{  JSON.parse($json.content.parts[0].text) }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        320,
+        -32
+      ],
+      "id": "dd0206d8-75d4-440a-875c-722b1770e44e",
+      "name": "parse data summarizer"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "3df733a7-0dc3-8011-af47-000bc28d257a",
+          "mode": "list",
+          "cachedResultName": "AI Email Dashboard",
+          "cachedResultUrl": "https://app.notion.com/p/3df733a70dc380a8af88d2692bd25ef2"
+        },
+        "title": "={{ $json.parsed.summary }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Priority|select",
+              "selectValue": "={{ $json.parsed.priority }}"
+            },
+            {
+              "key": "Category|select",
+              "selectValue": "={{ $json.parsed.category }}"
+            },
+            {
+              "key": "Action Item|rich_text",
+              "textContent": "={{ $json.parsed.action_items .join(',') }}"
+            },
+            {
+              "key": "Summary|rich_text",
+              "textContent": "={{ $json.parsed.summary }}"
+            },
+            {
+              "key": "Meeting Date|date",
+              "date": "={{ $json.parsed.meeting_date || '2026-09-09'}}",
+              "timezone": "=aisa/kolkata"
+            },
+            {
+              "key": "Caliet Email|email",
+              "emailValue": "={{ $('Gmail Trigger').item.json.To }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        832,
+        -112
+      ],
+      "id": "fc9b60a3-9df7-4994-9d7f-1759af150d0a",
+      "name": "Create a database page",
+      "credentials": {
+        "notionApi": {
+          "id": "kVzBbhPnD8PMFFEE",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "dataSourceId": {
+          "__rl": true,
+          "value": "3df733a7-0dc3-8011-af47-000bc28d257a",
+          "mode": "list",
+          "cachedResultName": "AI Email Dashboard",
+          "cachedResultUrl": "https://app.notion.com/p/3df733a70dc380a8af88d2692bd25ef2"
+        },
+        "title": "={{ $json.parsed.summary }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Priority|select",
+              "selectValue": "={{ $json.parsed.priority }}"
+            },
+            {
+              "key": "Category|select",
+              "selectValue": "={{ $json.parsed.category }}"
+            },
+            {
+              "key": "Action Item|rich_text",
+              "textContent": "={{ $json.parsed.action_items .join(',') }}"
+            },
+            {
+              "key": "Summary|rich_text",
+              "textContent": "={{ $json.parsed.summary }}"
+            },
+            {
+              "key": "Meeting Date|date",
+              "date": "={{ $json.parsed.meeting_date || '2026-09-09'}}",
+              "timezone": "=aisa/kolkata"
+            },
+            {
+              "key": "Caliet Email|email",
+              "emailValue": "={{ $('Gmail Trigger').item.json.To }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 3,
+      "position": [
+        1344,
+        64
+      ],
+      "id": "662308a0-3e41-4b6d-b1ec-b0cfb5c54413",
+      "name": "Create a database page1",
+      "credentials": {
+        "notionApi": {
+          "id": "kVzBbhPnD8PMFFEE",
+          "name": "Notion account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Ai summarizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ai summarizer": {
+      "main": [
+        [
+          {
+            "node": "parse data summarizer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "gemini validation check??": {
+      "main": [
+        [
+          {
+            "node": "Create a database page",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "ollama validation check??1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "parse data summarizer": {
+      "main": [
+        [
+          {
+            "node": "gemini validation check??",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ollama validation check??1": {
+      "main": [
+        [
+          {
+            "node": "Create a database page1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "f703aa49-42c5-450c-b004-0b72028f5a3f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "987bd47cce7f51505dfc545c5664527be588b61e88936b2f5fe21afd9b1591de"
+  },
+  "nodeGroups": [],
+  "id": "vfV5PaV5Mc4oxRWz",
+  "tags": []
+}
